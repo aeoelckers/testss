@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRM de Patentes</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div>
+      <p class="eyebrow">Patentes Chile · CRM personal</p>
+      <h1>Historial de patentes buscadas</h1>
+      <p class="lede">
+        Guarda las patentes que consultas en <a href="https://www.patentechile.com/" target="_blank" rel="noopener noreferrer">patentechile.com</a> y clasifícalas por segmento para que no tengas que repetir las búsquedas.
+      </p>
+    </div>
+    <div class="pill">
+      <span>Consejo rápido:</span> abre la patente en una pestaña nueva, copia los datos y guárdalos aquí.
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Nueva búsqueda</p>
+          <h2>Agregar patente al CRM</h2>
+        </div>
+        <button id="patentechile-link" class="ghost">Abrir patentechile.com</button>
+      </div>
+      <form id="plate-form" class="grid">
+        <label class="field">
+          <span>Patente*</span>
+          <input id="plate-input" name="plate" autocomplete="off" required maxlength="10" placeholder="Ej: AA1122 o BBCC11" />
+        </label>
+        <label class="field">
+          <span>Segmento*</span>
+          <select id="segment-select" name="segment" required>
+            <option value="Autos para comprar">Autos para comprar</option>
+            <option value="Autos de remates">Autos de remates</option>
+            <option value="Camiones mineros">Camiones de empresas mineras</option>
+            <option value="Camiones transportistas">Camiones de transportistas</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Notas / datos del vehículo</span>
+          <textarea id="notes-input" name="notes" rows="4" placeholder="Pega aquí el resumen de la consulta: marca, modelo, año, dueño, observaciones..."></textarea>
+        </label>
+        <label class="field">
+          <span>Etiquetas (separadas por coma)</span>
+          <input id="tags-input" name="tags" autocomplete="off" placeholder="ej: revisión técnica, transferencia, deuda" />
+        </label>
+        <div class="actions">
+          <button type="button" class="ghost" id="lookup-btn">Buscar y rellenar datos</button>
+          <button type="submit" class="primary">Guardar en CRM</button>
+          <button type="reset" class="ghost" id="reset-btn">Limpiar</button>
+        </div>
+        <p id="lookup-status" class="helper">Ingresa la patente y, si estás en local, usa el botón para intentar leer los datos automáticamente.</p>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Historial</p>
+          <h2>Patentes guardadas</h2>
+        </div>
+        <div class="filters">
+          <label class="field compact">
+            <span>Filtrar por patente</span>
+            <input id="search-input" placeholder="Buscar por patente" />
+          </label>
+          <label class="field compact">
+            <span>Segmento</span>
+            <select id="filter-segment">
+              <option value="">Todos</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Patente</th>
+              <th>Segmento</th>
+              <th>Notas</th>
+              <th>Etiquetas</th>
+              <th>Guardado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="records-body">
+            <tr class="empty">
+              <td colspan="6">Aún no hay patentes guardadas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <template id="record-row">
+    <tr>
+      <td class="plate"></td>
+      <td class="segment"></td>
+      <td class="notes"></td>
+      <td class="tags"></td>
+      <td class="timestamp"></td>
+      <td class="row-actions">
+        <button class="ghost small copy">Copiar</button>
+        <button class="ghost small delete">Borrar</button>
+      </td>
+    </tr>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
