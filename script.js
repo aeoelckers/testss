@@ -224,10 +224,6 @@ async function lookupPlate() {
     }
 
     const payload = await res.json();
-    if (payload?.error) {
-      throw new Error(payload.error);
-    }
-
     if (!payload?.html) {
       throw new Error('Respuesta vacía');
     }
@@ -245,7 +241,7 @@ async function lookupPlate() {
   } catch (err) {
     console.error(err);
     setLookupStatus(
-      `No pudimos leer los datos automáticamente (${err.message}). Abre la pestaña y copia la info manualmente.`,
+      'No pudimos leer los datos automáticamente. Abre la pestaña y copia la info manualmente.',
       'error',
     );
   } finally {
