@@ -69,34 +69,6 @@ function truncate(text, length = 160) {
   return text.length > length ? `${text.slice(0, length)}…` : text;
 }
 
-function formatFromFields(fields) {
-  return Object.entries(fields)
-    .map(([label, value]) => `${label}: ${value}`)
-    .join('\n');
-}
-
-function buildSummary(payload) {
-  if (!payload) return '';
-
-  if (payload.summary) {
-    return payload.summary;
-  }
-
-  if (payload.fields && Object.keys(payload.fields).length) {
-    return formatFromFields(payload.fields);
-  }
-
-  if (payload.html) {
-    const doc = new DOMParser().parseFromString(payload.html, 'text/html');
-    const text = doc.body?.innerText?.trim();
-    if (text) {
-      return text.length > 1200 ? `${text.slice(0, 1200)}…` : text;
-    }
-  }
-
-  return '';
-}
-
 function renderFilters() {
   const segments = new Set([...defaultSegments, ...records.map((r) => r.segment)]);
   filterSegment.innerHTML = '<option value="">Todos</option>';
@@ -252,25 +224,24 @@ async function lookupPlate() {
     }
 
     const payload = await res.json();
-    if (payload?.error) {
-      throw new Error(payload.error);
-    }
-
     if (!payload?.html) {
       throw new Error('Respuesta vacía');
     }
 
-    const summary = buildSummary(payload);
-    if (!summary) {
+    const doc = new DOMParser().parseFromString(payload.html, 'text/html');
+    const text = doc.body?.innerText?.trim();
+
+    if (!text) {
       throw new Error('No se encontraron datos legibles.');
     }
 
-    notesInput.value = summary;
+    const snippet = text.length > 1200 ? `${text.slice(0, 1200)}…` : text;
+    notesInput.value = snippet;
     setLookupStatus('Datos obtenidos. Revisa y guarda en el CRM.', 'success');
   } catch (err) {
     console.error(err);
     setLookupStatus(
-      `No pudimos leer los datos automáticamente (${err.message}). Abre la pestaña y copia la info manualmente.`,
+      'No pudimos leer los datos automáticamente. Abre la pestaña y copia la info manualmente.',
       'error',
     );
   } finally {

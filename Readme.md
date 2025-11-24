@@ -25,9 +25,7 @@ Luego abre http://localhost:8000/index.html en tu navegador y usa `index.html` p
 
 Notas:
 
-- El proxy local usa la librería estándar para traer el HTML público de patentechile.com, extraer la tabla de resultados (Patente, Tipo, Marca, etc.) y rellenar el campo de notas con esos pares clave/valor. Si el entorno bloquea las conexiones salientes verás un aviso y podrás copiar la información manualmente.
-- Variables de entorno útiles para ajustar la conexión: `PATENTECHILE_ORIGIN` (cambiar la URL base si usas un mirror o proxy propio), `PATENTECHILE_ATTEMPTS` (reintentos, por defecto 3) y `PATENTECHILE_TIMEOUT` (timeout por intento en segundos, por defecto 20).
-- El entorno de este sandbox devuelve actualmente un 403 al contactar patentechile.com, por lo que el autollenado no puede verificarse aquí. En tu red local, donde la página responde, verás que el servidor devuelve los campos ya estructurados y los copia al formulario.
+- El proxy local usa la librería estándar para traer el HTML público de patentechile.com y rellenar el campo de notas. Si el entorno bloquea las conexiones salientes verás un aviso y podrás copiar la información manualmente.
 - Si no necesitas el proxy y solo quieres abrir la página estática, también puedes ejecutar `python -m http.server 8000` y abrir http://localhost:8000.
 
 ### Publicar en GitHub Pages
