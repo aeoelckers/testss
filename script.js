@@ -1,4 +1,4 @@
-const APP_VERSION = '2024-06-26';
+const APP_VERSION = '2024-06-27';
 const storageKey = 'plate-records';
 const defaultSegments = [
   'Autos para comprar',
@@ -31,6 +31,8 @@ const manualToggle = document.getElementById('manual-toggle');
 const modeBanner = document.getElementById('mode-banner');
 const modeBannerTitle = modeBanner?.querySelector('.banner__title');
 const modeBannerBody = modeBanner?.querySelector('.banner__body');
+const parseNotesBtn = document.getElementById('parse-notes-btn');
+const parseNotesStatus = document.getElementById('parse-notes-status');
 
 const captureInput = document.getElementById('capture-input');
 const captureStatus = document.getElementById('capture-status');
@@ -131,6 +133,10 @@ function normalizeFeatures(features = {}) {
     fuel: features.fuel || '',
     extra: features.extra || buildLegacyExtra(features),
   };
+}
+
+function hasFeatureData(features = {}) {
+  return featureLabels.some(([key]) => Boolean(features[key]));
 }
 
 function collectFeatures() {
@@ -553,11 +559,19 @@ function deleteRecord(id) {
 function addRecord(event) {
   event.preventDefault();
 
-  const plate = normalizePlate(plateInput.value);
+  let plate = normalizePlate(plateInput.value);
   const segment = segmentSelect.value;
   const notes = notesInput.value.trim();
   const tags = parseTags(tagsInput.value);
-  const features = normalizeFeatures(collectFeatures());
+  let features = normalizeFeatures(collectFeatures());
+
+  if (!hasFeatureData(features) && notes) {
+    const parsed = parseVehicleData(notes);
+    if (parsed.plate && !plate) {
+      plate = normalizePlate(parsed.plate);
+    }
+    features = normalizeFeatures(parsed.features);
+  }
 
   if (!plate) {
     plateInput.focus();
@@ -581,6 +595,31 @@ function addRecord(event) {
   form.reset();
   segmentSelect.value = segment;
   plateInput.focus();
+}
+
+function setNotesStatus(message, tone = 'muted') {
+  if (!parseNotesStatus) return;
+  parseNotesStatus.textContent = message;
+  parseNotesStatus.dataset.tone = tone;
+}
+
+function analyzeNotesText() {
+  const text = notesInput.value.trim();
+  if (!text) {
+    setNotesStatus('Pega texto antes de analizarlo.', 'warning');
+    return;
+  }
+
+  const parsed = parseVehicleData(text);
+  const summary = parsed.summary || text;
+  applyParsedData({ ...parsed, summary }, 'texto libre', { showCaptureStatus: false });
+  const found = hasFeatureData(normalizeFeatures(parsed.features));
+
+  if (found) {
+    setNotesStatus('Texto analizado. Revisa los campos y guarda cuando esté listo.', 'success');
+  } else {
+    setNotesStatus('No se detectaron campos específicos. Completa la ficha manualmente.', 'error');
+  }
 }
 
 function setLookupStatus(message, tone = 'muted') {
@@ -660,8 +699,9 @@ async function ocrImage(dataUrl) {
   return data.text || '';
 }
 
-function applyParsedData(parsed, originLabel = 'OCR') {
+function applyParsedData(parsed, originLabel = 'OCR', options = {}) {
   if (!parsed) return;
+  const { showCaptureStatus = true } = options;
 
   if (parsed.plate) {
     plateInput.value = normalizePlate(parsed.plate);
@@ -688,7 +728,9 @@ function applyParsedData(parsed, originLabel = 'OCR') {
   }
 
   openManualPanel();
-  setCaptureStatus(`Datos extraídos de ${originLabel}. Revisa y completa si falta algo.`, 'success');
+  if (showCaptureStatus) {
+    setCaptureStatus(`Datos extraídos de ${originLabel}. Revisa y completa si falta algo.`, 'success');
+  }
 }
 
 async function handleImageFile(file) {
@@ -894,6 +936,10 @@ function init() {
   manualToggle.addEventListener('click', toggleManualPanel);
   closeManualPanel();
   setDefaultLookupMessage();
+
+  if (parseNotesBtn) {
+    parseNotesBtn.addEventListener('click', analyzeNotesText);
+  }
 
   if (captureInput) {
     captureInput.addEventListener('change', (event) => {

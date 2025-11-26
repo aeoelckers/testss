@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles.css?v=2024-06-26" />
+  <link rel="stylesheet" href="styles.css?v=2024-06-27" />
 </head>
   <body>
     <header class="header">
@@ -137,6 +137,12 @@
                 placeholder="Resumen del resultado: propietarios, permisos, deudas, kilometraje…"
               ></textarea>
             </label>
+            <div class="inline-actions">
+              <button type="button" class="ghost small" id="parse-notes-btn">Analizar texto y rellenar ficha</button>
+              <p class="helper helper--inline" id="parse-notes-status">
+                Pega aquí el texto que copiaste u obtuviste por OCR y úsalo para rellenar la ficha.
+              </p>
+            </div>
             <label class="field">
               <span>Etiquetas (separadas por coma)
               </span>
@@ -234,6 +240,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.3.136/build/pdf.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js" crossorigin="anonymous"></script>
-  <script src="script.js?v=2024-06-26"></script>
+  <script src="script.js?v=2024-06-27"></script>
 </body>
 </html>

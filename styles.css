@@ -316,6 +316,18 @@ tr.empty td {
   color: var(--muted);
 }
 
+.helper[data-tone='success'] {
+  color: #22c55e;
+}
+
+.helper[data-tone='warning'] {
+  color: #fbbf24;
+}
+
+.helper[data-tone='error'] {
+  color: #f87171;
+}
+
 .manual {
   display: none;
   border-top: 1px solid var(--border);
@@ -333,6 +345,13 @@ tr.empty td {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.inline-actions {
+  display: flex;
+  gap: 10px;
   align-items: center;
   flex-wrap: wrap;
 }
