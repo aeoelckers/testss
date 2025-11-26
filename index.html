@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Patente Autos</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="stylesheet" href="styles.css?v=2024-06-25" />
+</head>
+  <body>
+    <header class="header">
+      <h1>Patente Autos</h1>
+      <span class="pill pill--muted" id="build-version" aria-label="Versión de la interfaz"></span>
+    </header>
+
+  <main>
+    <div id="mode-banner" class="banner" role="status" aria-live="polite">
+      <p class="banner__title">Modo de carga</p>
+      <p class="banner__body">Verificando el estado…</p>
+    </div>
+
+    <section class="card">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Nueva búsqueda</p>
+          <h2>Agregar patente al CRM</h2>
+        </div>
+        <button id="patentechile-link" class="ghost">Abrir patentechile.com</button>
+      </div>
+
+      <form id="plate-form" class="stack">
+        <div class="grid grid--compact">
+          <label class="field wide">
+            <span>Patente*</span>
+            <input
+              id="plate-input"
+              name="plate"
+              autocomplete="off"
+              required
+              maxlength="10"
+              placeholder="Ej: AA1122 o BBCC11"
+            />
+          </label>
+          <div class="actions actions--stacked">
+            <button type="button" class="primary" id="lookup-btn">Buscar en patentechile.com</button>
+            <button type="button" class="ghost" id="manual-toggle">Completar manualmente</button>
+          </div>
+        </div>
+        <p id="lookup-status" class="helper">
+          Ingresa la patente y luego elige si la consultas en línea o si despliegas la ficha manual.
+        </p>
+
+        <div id="manual-panel" class="manual">
+          <div class="manual__header">
+            <div>
+              <p class="eyebrow">Ficha rápida</p>
+              <h3>Información vehicular</h3>
+              <p class="helper">
+                Copia la tabla tal cual aparece en patentechile.com o rellénala con los datos del remate.
+              </p>
+            </div>
+            <span class="pill pill--muted">Se abre al tocar “Completar manualmente”.</span>
+          </div>
+
+          <details class="accordion" open>
+            <summary class="accordion__summary">
+              <span class="accordion__title">Información vehicular</span>
+              <span class="accordion__hint">Patente, tipo, marca, modelo, año, color…</span>
+            </summary>
+            <div class="grid grid--tight">
+              <label class="field">
+                <span>Tipo</span>
+                <input id="feature-type" autocomplete="off" placeholder="Camioneta, sedán, SUV…" />
+              </label>
+              <label class="field">
+                <span>Marca</span>
+                <input id="feature-brand" autocomplete="off" placeholder="CHEVROLET, TOYOTA…" />
+              </label>
+              <label class="field">
+                <span>Modelo</span>
+                <input id="feature-model" autocomplete="off" placeholder="LUV DMAX, RAV4…" />
+              </label>
+              <label class="field">
+                <span>Año</span>
+                <input id="feature-year" autocomplete="off" placeholder="2009" />
+              </label>
+              <label class="field">
+                <span>Color</span>
+                <input id="feature-color" autocomplete="off" placeholder="Blanco, gris, rojo…" />
+              </label>
+              <label class="field">
+                <span>Nº Motor</span>
+                <input id="feature-engine" autocomplete="off" placeholder="G276019" />
+              </label>
+              <label class="field">
+                <span>Nº Chasis</span>
+                <input id="feature-chassis" autocomplete="off" placeholder="8GGTF3…" />
+              </label>
+              <label class="field">
+                <span>Procedencia</span>
+                <input id="feature-origin" autocomplete="off" placeholder="Chile, importado…" />
+              </label>
+              <label class="field">
+                <span>Fabricante</span>
+                <input id="feature-maker" autocomplete="off" placeholder="General Motors Chile Ltda." />
+              </label>
+              <label class="field">
+                <span>Tipo de sello</span>
+                <input id="feature-seal" autocomplete="off" placeholder="Sello verde, catalítico…" />
+              </label>
+              <label class="field">
+                <span>Combustible</span>
+                <input id="feature-fuel" autocomplete="off" placeholder="Gasolina, diésel…" />
+              </label>
+            </div>
+          </details>
+
+          <div class="grid">
+            <label class="field">
+              <span>Segmento*</span>
+              <select id="segment-select" name="segment" required>
+                <option value="Autos para comprar">Autos para comprar</option>
+                <option value="Autos de remates">Autos de remates</option>
+                <option value="Camiones mineros">Camiones de empresas mineras</option>
+                <option value="Camiones transportistas">Camiones de transportistas</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Notas / datos del vehículo</span>
+              <textarea
+                id="notes-input"
+                name="notes"
+                rows="4"
+                placeholder="Resumen del resultado: propietarios, permisos, deudas, kilometraje…"
+              ></textarea>
+            </label>
+            <label class="field">
+              <span>Etiquetas (separadas por coma)
+              </span>
+              <input id="tags-input" name="tags" autocomplete="off" placeholder="ej: revisión técnica, transferencia, deuda" />
+            </label>
+            <div class="field field--stacked">
+              <div class="field__header">
+                <span>Cargar captura o PDF</span>
+                <span class="pill pill--muted">Opcional</span>
+              </div>
+              <p class="helper">
+                Sube una captura o un PDF de patentechile.com. Usaremos OCR para leer la tabla y rellenar la ficha.
+              </p>
+              <div class="uploader" id="capture-uploader">
+                <label class="uploader__drop" for="capture-input">
+                  <span class="uploader__title">Arrastra aquí tu imagen o PDF</span>
+                  <span class="uploader__subtitle">o haz clic para elegir un archivo</span>
+                  <span class="uploader__hint">Formatos: JPG, PNG, PDF</span>
+                </label>
+                <input id="capture-input" class="uploader__input" type="file" accept="image/*,application/pdf" />
+                <div class="uploader__status" id="capture-status">Esperando archivo…</div>
+                <div class="uploader__preview" id="capture-preview" aria-live="polite"></div>
+              </div>
+            </div>
+            <div class="actions">
+              <button type="submit" class="primary">Guardar en CRM</button>
+              <button type="reset" class="ghost" id="reset-btn">Limpiar</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Historial</p>
+          <h2>Patentes guardadas</h2>
+        </div>
+        <div class="filters">
+          <label class="field compact">
+            <span>Filtrar por patente</span>
+            <input id="search-input" placeholder="Buscar por patente" />
+          </label>
+          <label class="field compact">
+            <span>Segmento</span>
+            <select id="filter-segment">
+              <option value="">Todos</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Patente</th>
+              <th>Segmento</th>
+              <th>Información vehicular</th>
+              <th>Notas</th>
+              <th>Etiquetas</th>
+              <th>Guardado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="records-body">
+            <tr class="empty">
+              <td colspan="7">Aún no hay patentes guardadas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <template id="record-row">
+    <tr>
+      <td class="plate"></td>
+      <td class="segment"></td>
+      <td class="details">
+        <details class="row-accordion">
+          <summary>Información vehicular</summary>
+          <dl class="feature-list"></dl>
+        </details>
+      </td>
+      <td class="notes"></td>
+      <td class="tags"></td>
+      <td class="timestamp"></td>
+      <td class="row-actions">
+        <button class="ghost small copy">Copiar</button>
+        <button class="ghost small delete">Borrar</button>
+      </td>
+    </tr>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.3.136/build/pdf.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js" crossorigin="anonymous"></script>
+  <script src="script.js?v=2024-06-25"></script>
+</body>
+</html>
