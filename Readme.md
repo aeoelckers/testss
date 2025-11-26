@@ -1,4 +1,3 @@
-Read me file
 # Testss Repo
 
 This repository is a lightweight sandbox for trying out changes and testing workflows. Use it to make quick edits, run scripts, or practice commit and PR flows without worrying about complex dependencies. The repo now also includes a simple CRM web page to guardar el historial de patentes consultadas en patentechile.com.
@@ -80,3 +79,39 @@ Si al editar los archivos en GitHub ves marcadores de conflicto (con botones com
 Consejo: si dudas de qué versión elegir, abre el archivo en otra pestaña para ver el contexto completo o compara con el historial de commits para asegurarte de que no se pierde información importante.
 
 Feel free to add additional files or notes as needed for your experiments.
+
+### Cómo pasar tus cambios de este sandbox a tu repositorio de GitHub (sin copiar/pegar)
+
+Si ya ves la app funcionando aquí pero en GitHub Pages sigue antigua, evita copiar y pegar archivo por archivo. Empuja los
+commits directamente desde este sandbox a tu repo en GitHub siguiendo estos pasos:
+
+1. **Configura el remoto** (solo la primera vez):
+   ```bash
+   git remote set-url origin https://github.com/<tu-usuario>/<tu-repo>.git
+   ```
+   O, si el remoto no existe aún:
+   ```bash
+   git remote add origin https://github.com/<tu-usuario>/<tu-repo>.git
+   ```
+2. **Confirma que estás en la rama correcta** (usa `main` o `work`, que son las que disparan el deploy de Pages aquí):
+   ```bash
+   git branch
+   # si necesitas crearla o moverte
+   git checkout -B work
+   ```
+3. **Agrega y commitea tus cambios** (sin pegar manualmente):
+   ```bash
+   git status -sb
+   git add .
+   git commit -m "Actualiza CRM oscuro y buscador"
+   ```
+4. **Haz push al remoto**:
+   ```bash
+   git push origin work
+   # o git push origin main, según tu flujo
+   ```
+5. **Verifica el deploy**: abre la pestaña *Actions* en GitHub y confirma que el workflow "Deploy static content to Pages" corrió
+   sobre ese commit. Cuando termine en verde, espera 1–2 minutos y recarga tu URL de Pages con Ctrl+Shift+R.
+
+Si sigues este flujo, todo el árbol de archivos se sincroniza sin tener que copiar/pegar manualmente y GitHub Pages recibirá la
+versión exacta que ves aquí.
