@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles.css?v=2024-06-27" />
+  <link rel="stylesheet" href="styles.css?v=2024-06-28" />
 </head>
   <body>
     <header class="header">
@@ -64,58 +64,89 @@
             <span class="pill pill--muted">Se abre al tocar “Completar manualmente”.</span>
           </div>
 
-          <details class="accordion" open>
-            <summary class="accordion__summary">
-              <span class="accordion__title">Información vehicular</span>
-              <span class="accordion__hint">Patente, tipo, marca, modelo, año, color…</span>
-            </summary>
-            <div class="grid grid--tight">
-              <label class="field">
-                <span>Tipo</span>
-                <input id="feature-type" autocomplete="off" placeholder="Camioneta, sedán, SUV…" />
-              </label>
-              <label class="field">
-                <span>Marca</span>
-                <input id="feature-brand" autocomplete="off" placeholder="CHEVROLET, TOYOTA…" />
-              </label>
-              <label class="field">
-                <span>Modelo</span>
-                <input id="feature-model" autocomplete="off" placeholder="LUV DMAX, RAV4…" />
-              </label>
-              <label class="field">
-                <span>Año</span>
-                <input id="feature-year" autocomplete="off" placeholder="2009" />
-              </label>
-              <label class="field">
-                <span>Color</span>
-                <input id="feature-color" autocomplete="off" placeholder="Blanco, gris, rojo…" />
-              </label>
-              <label class="field">
-                <span>Nº Motor</span>
-                <input id="feature-engine" autocomplete="off" placeholder="G276019" />
-              </label>
-              <label class="field">
-                <span>Nº Chasis</span>
-                <input id="feature-chassis" autocomplete="off" placeholder="8GGTF3…" />
-              </label>
-              <label class="field">
-                <span>Procedencia</span>
-                <input id="feature-origin" autocomplete="off" placeholder="Chile, importado…" />
-              </label>
-              <label class="field">
-                <span>Fabricante</span>
-                <input id="feature-maker" autocomplete="off" placeholder="General Motors Chile Ltda." />
-              </label>
-              <label class="field">
-                <span>Tipo de sello</span>
-                <input id="feature-seal" autocomplete="off" placeholder="Sello verde, catalítico…" />
-              </label>
-              <label class="field">
-                <span>Combustible</span>
-                <input id="feature-fuel" autocomplete="off" placeholder="Gasolina, diésel…" />
-              </label>
+          <div class="vehicle-sheet" aria-label="Información vehicular">
+            <div class="vehicle-sheet__header">
+              <div>
+                <p class="eyebrow">Información vehicular</p>
+                <h4>Formato tabla como en patentechile.com</h4>
+              </div>
+              <span class="pill pill--muted">Patente, tipo, marca, modelo, año…</span>
             </div>
-          </details>
+            <div class="vehicle-sheet__table" role="table">
+              <div class="vehicle-sheet__row" role="row">
+                <div class="vehicle-sheet__cell vehicle-sheet__cell--label" role="columnheader">Patente</div>
+                <div class="vehicle-sheet__cell" role="cell">
+                  <input id="feature-plate" autocomplete="off" placeholder="Se rellena con la patente" readonly />
+                </div>
+              </div>
+              <div class="vehicle-sheet__row" role="row">
+                <div class="vehicle-sheet__cell vehicle-sheet__cell--label" role="columnheader">Tipo</div>
+                <div class="vehicle-sheet__cell" role="cell">
+                  <input id="feature-type" autocomplete="off" placeholder="Camioneta, sedán, SUV…" />
+                </div>
+              </div>
+              <div class="vehicle-sheet__row" role="row">
+                <div class="vehicle-sheet__cell vehicle-sheet__cell--label" role="columnheader">Marca</div>
+                <div class="vehicle-sheet__cell" role="cell">
+                  <input id="feature-brand" autocomplete="off" placeholder="CHEVROLET, TOYOTA…" />
+                </div>
+              </div>
+              <div class="vehicle-sheet__row" role="row">
+                <div class="vehicle-sheet__cell vehicle-sheet__cell--label" role="columnheader">Modelo</div>
+                <div class="vehicle-sheet__cell" role="cell">
+                  <input id="feature-model" autocomplete="off" placeholder="LUV DMAX, RAV4…" />
+                </div>
+              </div>
+              <div class="vehicle-sheet__row" role="row">
+                <div class="vehicle-sheet__cell vehicle-sheet__cell--label" role="columnheader">Año</div>
+                <div class="vehicle-sheet__cell" role="cell">
+                  <input id="feature-year" autocomplete="off" placeholder="2009" />
+                </div>
+              </div>
+              <div class="vehicle-sheet__row" role="row">
+                <div class="vehicle-sheet__cell vehicle-sheet__cell--label" role="columnheader">Color</div>
+                <div class="vehicle-sheet__cell" role="cell">
+                  <input id="feature-color" autocomplete="off" placeholder="Blanco, gris, rojo…" />
+                </div>
+              </div>
+              <div class="vehicle-sheet__row" role="row">
+                <div class="vehicle-sheet__cell vehicle-sheet__cell--label" role="columnheader">Nº Motor</div>
+                <div class="vehicle-sheet__cell" role="cell">
+                  <input id="feature-engine" autocomplete="off" placeholder="G276019" />
+                </div>
+              </div>
+              <div class="vehicle-sheet__row" role="row">
+                <div class="vehicle-sheet__cell vehicle-sheet__cell--label" role="columnheader">Nº Chasis</div>
+                <div class="vehicle-sheet__cell" role="cell">
+                  <input id="feature-chassis" autocomplete="off" placeholder="8GGTF3…" />
+                </div>
+              </div>
+              <div class="vehicle-sheet__row" role="row">
+                <div class="vehicle-sheet__cell vehicle-sheet__cell--label" role="columnheader">Procedencia</div>
+                <div class="vehicle-sheet__cell" role="cell">
+                  <input id="feature-origin" autocomplete="off" placeholder="Chile, importado…" />
+                </div>
+              </div>
+              <div class="vehicle-sheet__row" role="row">
+                <div class="vehicle-sheet__cell vehicle-sheet__cell--label" role="columnheader">Fabricante</div>
+                <div class="vehicle-sheet__cell" role="cell">
+                  <input id="feature-maker" autocomplete="off" placeholder="General Motors Chile Ltda." />
+                </div>
+              </div>
+              <div class="vehicle-sheet__row" role="row">
+                <div class="vehicle-sheet__cell vehicle-sheet__cell--label" role="columnheader">Tipo de sello</div>
+                <div class="vehicle-sheet__cell" role="cell">
+                  <input id="feature-seal" autocomplete="off" placeholder="Sello verde, catalítico…" />
+                </div>
+              </div>
+              <div class="vehicle-sheet__row" role="row">
+                <div class="vehicle-sheet__cell vehicle-sheet__cell--label" role="columnheader">Combustible</div>
+                <div class="vehicle-sheet__cell" role="cell">
+                  <input id="feature-fuel" autocomplete="off" placeholder="Gasolina, diésel…" />
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div class="grid">
             <label class="field">
@@ -240,6 +271,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.3.136/build/pdf.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js" crossorigin="anonymous"></script>
-  <script src="script.js?v=2024-06-27"></script>
+  <script src="script.js?v=2024-06-28"></script>
 </body>
 </html>

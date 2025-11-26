@@ -1,4 +1,4 @@
-const APP_VERSION = '2024-06-27';
+const APP_VERSION = '2024-06-28';
 const storageKey = 'plate-records';
 const defaultSegments = [
   'Autos para comprar',
@@ -39,6 +39,7 @@ const captureStatus = document.getElementById('capture-status');
 const capturePreview = document.getElementById('capture-preview');
 const captureUploader = document.getElementById('capture-uploader');
 
+const featurePlate = document.getElementById('feature-plate');
 const featureType = document.getElementById('feature-type');
 const featureBrand = document.getElementById('feature-brand');
 const featureModel = document.getElementById('feature-model');
@@ -73,6 +74,11 @@ function normalizePlate(value) {
     .trim()
     .replace(/\s+/g, '')
     .toUpperCase();
+}
+
+function syncFeaturePlate() {
+  if (!featurePlate) return;
+  featurePlate.value = plateInput.value.trim();
 }
 
 function parseTags(raw) {
@@ -707,6 +713,8 @@ function applyParsedData(parsed, originLabel = 'OCR', options = {}) {
     plateInput.value = normalizePlate(parsed.plate);
   }
 
+  syncFeaturePlate();
+
   if (parsed.summary) {
     notesInput.value = parsed.summary;
   }
@@ -918,11 +926,13 @@ function init() {
   renderRecords();
 
   form.addEventListener('submit', addRecord);
+  plateInput.addEventListener('input', syncFeaturePlate);
   searchInput.addEventListener('input', renderRecords);
   filterSegment.addEventListener('change', renderRecords);
   resetBtn.addEventListener('click', () => {
     plateInput.focus();
     closeManualPanel();
+    syncFeaturePlate();
   });
 
   patenteChileLink.addEventListener('click', () => {
@@ -969,6 +979,7 @@ function init() {
     });
   }
 
+  syncFeaturePlate();
   setCaptureStatus('Esperando archivo… (si ves error de OCR, recarga con Ctrl+Shift+R)', 'muted');
 }
 
