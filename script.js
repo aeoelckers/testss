@@ -24,16 +24,6 @@ const resetBtn = document.getElementById('reset-btn');
 const patenteChileLink = document.getElementById('patentechile-link');
 const lookupBtn = document.getElementById('lookup-btn');
 const lookupStatus = document.getElementById('lookup-status');
-const manualPanel = document.getElementById('manual-panel');
-const manualToggle = document.getElementById('manual-toggle');
-
-const featureVehicle = document.getElementById('feature-vehicle');
-const featureYear = document.getElementById('feature-year');
-const featureOrigin = document.getElementById('feature-origin');
-const featurePermit = document.getElementById('feature-permit');
-const featureInspection = document.getElementById('feature-inspection');
-const featureKms = document.getElementById('feature-kms');
-const featurePrice = document.getElementById('feature-price');
 
 let records = [];
 
@@ -41,7 +31,7 @@ function loadRecords() {
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey));
     if (Array.isArray(saved)) {
-      records = saved.map((record) => ({ ...record, features: record.features || {} }));
+      records = saved;
     }
   } catch (err) {
     console.error('No se pudieron cargar los datos guardados', err);
@@ -79,63 +69,6 @@ function truncate(text, length = 160) {
   return text.length > length ? `${text.slice(0, length)}…` : text;
 }
 
-function collectFeatures() {
-  return {
-    vehicle: featureVehicle.value.trim(),
-    year: featureYear.value.trim(),
-    origin: featureOrigin.value.trim(),
-    permit: featurePermit.value.trim(),
-    inspection: featureInspection.value.trim(),
-    kms: featureKms.value.trim(),
-    price: featurePrice.value.trim(),
-  };
-}
-
-function formatFeatures(features = {}) {
-  const entries = [
-    ['Vehículo', features.vehicle],
-    ['Año', features.year],
-    ['Origen', features.origin],
-    ['Permiso', features.permit],
-    ['Última R.T.', features.inspection],
-    ['Kms', features.kms],
-    ['Precio', features.price],
-  ];
-
-  return entries
-    .filter(([, value]) => Boolean(value))
-    .map(([label, value]) => `${label}: ${value}`)
-    .join(' • ');
-}
-
-function formatFromFields(fields) {
-  return Object.entries(fields)
-    .map(([label, value]) => `${label}: ${value}`)
-    .join('\n');
-}
-
-function buildSummary(payload) {
-  if (!payload) return '';
-
-  if (payload.summary) {
-    return payload.summary;
-  }
-
-  if (payload.fields && Object.keys(payload.fields).length) {
-    return formatFromFields(payload.fields);
-  }
-
-  if (payload.html) {
-    const doc = new DOMParser().parseFromString(payload.html, 'text/html');
-    const text = doc.body?.innerText?.trim();
-    if (text) {
-      return text.length > 1200 ? `${text.slice(0, 1200)}…` : text;
-    }
-  }
-
-  return '';
-}
-
 function renderFilters() {
   const segments = new Set([...defaultSegments, ...records.map((r) => r.segment)]);
   filterSegment.innerHTML = '<option value="">Todos</option>';
@@ -162,7 +95,7 @@ function renderRecords() {
   if (!filtered.length) {
     const row = document.createElement('tr');
     row.classList.add('empty');
-    row.innerHTML = '<td colspan="7">Aún no hay patentes guardadas.</td>';
+    row.innerHTML = '<td colspan="6">Aún no hay patentes guardadas.</td>';
     tableBody.appendChild(row);
     return;
   }
@@ -175,8 +108,6 @@ function renderRecords() {
 
       row.querySelector('.plate').textContent = record.plate;
       row.querySelector('.segment').textContent = record.segment;
-      const details = formatFeatures(record.features);
-      row.querySelector('.details').textContent = details ? truncate(details, 120) : '—';
       row.querySelector('.notes').textContent = truncate(record.notes);
 
       const tagsCell = row.querySelector('.tags');
@@ -220,21 +151,6 @@ function copyFeedback(message) {
   setTimeout(() => toast.remove(), 1500);
 }
 
-function openManualPanel() {
-  manualPanel.classList.add('manual--open');
-  manualToggle.setAttribute('aria-expanded', 'true');
-}
-
-function closeManualPanel() {
-  manualPanel.classList.remove('manual--open');
-  manualToggle.setAttribute('aria-expanded', 'false');
-}
-
-function toggleManualPanel() {
-  const isOpen = manualPanel.classList.toggle('manual--open');
-  manualToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-}
-
 function deleteRecord(id) {
   records = records.filter((r) => r.id !== id);
   persistRecords();
@@ -249,7 +165,6 @@ function addRecord(event) {
   const segment = segmentSelect.value;
   const notes = notesInput.value.trim();
   const tags = parseTags(tagsInput.value);
-  const features = collectFeatures();
 
   if (!plate) {
     plateInput.focus();
@@ -262,7 +177,6 @@ function addRecord(event) {
     segment,
     notes,
     tags,
-    features,
     timestamp: Date.now(),
   };
 
@@ -306,37 +220,28 @@ async function lookupPlate() {
   try {
     const res = await fetch(`/api/proxy?plate=${encodeURIComponent(plate)}`);
     if (!res.ok) {
-      if (res.status === 404) {
-        throw new Error('El proxy no está disponible en esta copia estática. Corre python server.py en local.');
-      }
-      throw new Error(`No se pudo obtener datos (HTTP ${res.status}).`);
+      throw new Error('No se pudo obtener datos');
     }
 
     const payload = await res.json();
-    if (payload?.error) {
-      throw new Error(payload.error);
-    }
-
     if (!payload?.html) {
       throw new Error('Respuesta vacía');
     }
 
-    const summary = buildSummary(payload);
-    if (!summary) {
+    const doc = new DOMParser().parseFromString(payload.html, 'text/html');
+    const text = doc.body?.innerText?.trim();
+
+    if (!text) {
       throw new Error('No se encontraron datos legibles.');
     }
 
-    notesInput.value = summary;
-    openManualPanel();
+    const snippet = text.length > 1200 ? `${text.slice(0, 1200)}…` : text;
+    notesInput.value = snippet;
     setLookupStatus('Datos obtenidos. Revisa y guarda en el CRM.', 'success');
   } catch (err) {
     console.error(err);
-    const manualHint = isLikelyStaticHost
-      ? 'En GitHub Pages el botón de autollenado no funciona; abre la web oficial y pega los datos aquí.'
-      : 'Abre la pestaña de patentechile.com y copia la info en la ficha manual.';
-
     setLookupStatus(
-      `No pudimos leer los datos automáticamente (${err.message}). ${manualHint}`,
+      'No pudimos leer los datos automáticamente. Abre la pestaña y copia la info manualmente.',
       'error',
     );
   } finally {
@@ -352,10 +257,7 @@ function init() {
   form.addEventListener('submit', addRecord);
   searchInput.addEventListener('input', renderRecords);
   filterSegment.addEventListener('change', renderRecords);
-  resetBtn.addEventListener('click', () => {
-    plateInput.focus();
-    closeManualPanel();
-  });
+  resetBtn.addEventListener('click', () => plateInput.focus());
 
   patenteChileLink.addEventListener('click', () => {
     const plate = normalizePlate(plateInput.value);
@@ -365,8 +267,6 @@ function init() {
   });
 
   lookupBtn.addEventListener('click', lookupPlate);
-  manualToggle.addEventListener('click', toggleManualPanel);
-  closeManualPanel();
   setDefaultLookupMessage();
 }
 
