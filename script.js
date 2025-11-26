@@ -1,4 +1,4 @@
-const APP_VERSION = '2024-06-28';
+const APP_VERSION = '2024-06-29';
 const storageKey = 'plate-records';
 const defaultSegments = [
   'Autos para comprar',
@@ -256,6 +256,8 @@ function buildFieldMap(text) {
     'Combustible',
   ];
 
+  const inlinePairs = extractInlinePairs(lines, knownKeys);
+
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i];
     const colonIndex = line.indexOf(':');
@@ -286,7 +288,35 @@ function buildFieldMap(text) {
     }
   }
 
+  Object.entries(inlinePairs).forEach(([key, value]) => {
+    if (!map[key]) {
+      map[key] = value;
+    }
+  });
+
   return { map, lines };
+}
+
+function extractInlinePairs(lines, knownKeys) {
+  const pairs = {};
+  const pattern = knownKeys
+    .map((key) => key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('|');
+  const regex = new RegExp(`(${pattern})\s+([^:]+?)(?=\s+(?:${pattern})\b|$)`, 'gi');
+
+  lines.forEach((line) => {
+    let match;
+    while ((match = regex.exec(line)) !== null) {
+      const [, key, value] = match;
+      const cleanKey = key.trim();
+      const cleanValue = value.trim();
+      if (cleanKey && cleanValue && !pairs[cleanKey]) {
+        pairs[cleanKey] = cleanValue;
+      }
+    }
+  });
+
+  return pairs;
 }
 
 function parseVehicleData(text) {
@@ -715,8 +745,10 @@ function applyParsedData(parsed, originLabel = 'OCR', options = {}) {
 
   syncFeaturePlate();
 
-  if (parsed.summary) {
-    notesInput.value = parsed.summary;
+  const { rawText } = parsed;
+  if (parsed.summary || rawText) {
+    const nextNotes = parsed.summary || rawText;
+    notesInput.value = nextNotes;
   }
 
   const { features } = parsed;
@@ -753,7 +785,7 @@ async function handleImageFile(file) {
 
   const text = await ocrImage(dataUrl);
   const parsed = parseVehicleData(text);
-  applyParsedData(parsed, file.name);
+  applyParsedData({ ...parsed, rawText: text }, file.name);
 }
 
 async function handlePdfFile(file) {
@@ -773,8 +805,9 @@ async function handlePdfFile(file) {
     chunks.push(text);
   }
 
-  const parsed = parseVehicleData(chunks.join('\n'));
-  applyParsedData(parsed, file.name);
+  const rawText = chunks.join('\n');
+  const parsed = parseVehicleData(rawText);
+  applyParsedData({ ...parsed, rawText }, file.name);
 }
 
 async function handleCapture(file) {
