@@ -1,4 +1,4 @@
-const APP_VERSION = '2024-06-23';
+const APP_VERSION = '2024-06-25';
 const storageKey = 'plate-records';
 const defaultSegments = [
   'Autos para comprar',
@@ -37,13 +37,17 @@ const captureStatus = document.getElementById('capture-status');
 const capturePreview = document.getElementById('capture-preview');
 const captureUploader = document.getElementById('capture-uploader');
 
-const featureVehicle = document.getElementById('feature-vehicle');
+const featureType = document.getElementById('feature-type');
+const featureBrand = document.getElementById('feature-brand');
+const featureModel = document.getElementById('feature-model');
 const featureYear = document.getElementById('feature-year');
+const featureColor = document.getElementById('feature-color');
+const featureEngine = document.getElementById('feature-engine');
+const featureChassis = document.getElementById('feature-chassis');
 const featureOrigin = document.getElementById('feature-origin');
-const featurePermit = document.getElementById('feature-permit');
-const featureInspection = document.getElementById('feature-inspection');
-const featureKms = document.getElementById('feature-kms');
-const featurePrice = document.getElementById('feature-price');
+const featureMaker = document.getElementById('feature-maker');
+const featureSeal = document.getElementById('feature-seal');
+const featureFuel = document.getElementById('feature-fuel');
 
 let records = [];
 
@@ -51,7 +55,7 @@ function loadRecords() {
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey));
     if (Array.isArray(saved)) {
-      records = saved.map((record) => ({ ...record, features: record.features || {} }));
+      records = saved.map((record) => ({ ...record, features: normalizeFeatures(record.features) }));
     }
   } catch (err) {
     console.error('No se pudieron cargar los datos guardados', err);
@@ -89,33 +93,112 @@ function truncate(text, length = 160) {
   return text.length > length ? `${text.slice(0, length)}…` : text;
 }
 
+const featureLabels = [
+  ['type', 'Tipo'],
+  ['brand', 'Marca'],
+  ['model', 'Modelo'],
+  ['year', 'Año'],
+  ['color', 'Color'],
+  ['engine', 'Nº Motor'],
+  ['chassis', 'Nº Chasis'],
+  ['origin', 'Procedencia'],
+  ['maker', 'Fabricante'],
+  ['seal', 'Tipo de sello'],
+  ['fuel', 'Combustible'],
+];
+
+function buildLegacyExtra(features = {}) {
+  const extras = [];
+  if (features.permit) extras.push(`Permiso de circulación: ${features.permit}`);
+  if (features.inspection) extras.push(`Revisión técnica: ${features.inspection}`);
+  if (features.kms) extras.push(`Kilometraje: ${features.kms}`);
+  if (features.price) extras.push(`Precio/Valor referencia: ${features.price}`);
+  return extras.join(' • ');
+}
+
+function normalizeFeatures(features = {}) {
+  return {
+    type: features.type || '',
+    brand: features.brand || '',
+    model: features.model || features.vehicle || '',
+    year: features.year || '',
+    color: features.color || '',
+    engine: features.engine || '',
+    chassis: features.chassis || '',
+    origin: features.origin || '',
+    maker: features.maker || '',
+    seal: features.seal || '',
+    fuel: features.fuel || '',
+    extra: features.extra || buildLegacyExtra(features),
+  };
+}
+
 function collectFeatures() {
   return {
-    vehicle: featureVehicle.value.trim(),
+    type: featureType.value.trim(),
+    brand: featureBrand.value.trim(),
+    model: featureModel.value.trim(),
     year: featureYear.value.trim(),
+    color: featureColor.value.trim(),
+    engine: featureEngine.value.trim(),
+    chassis: featureChassis.value.trim(),
     origin: featureOrigin.value.trim(),
-    permit: featurePermit.value.trim(),
-    inspection: featureInspection.value.trim(),
-    kms: featureKms.value.trim(),
-    price: featurePrice.value.trim(),
+    maker: featureMaker.value.trim(),
+    seal: featureSeal.value.trim(),
+    fuel: featureFuel.value.trim(),
   };
 }
 
 function formatFeatures(features = {}) {
-  const entries = [
-    ['Vehículo', features.vehicle],
-    ['Año', features.year],
-    ['Origen', features.origin],
-    ['Permiso', features.permit],
-    ['Última R.T.', features.inspection],
-    ['Kms', features.kms],
-    ['Precio', features.price],
-  ];
-
-  return entries
+  const summary = featureLabels
+    .map(([key, label]) => [label, features[key]])
     .filter(([, value]) => Boolean(value))
     .map(([label, value]) => `${label}: ${value}`)
     .join(' • ');
+
+  if (summary) return summary;
+  if (features.extra) return features.extra;
+  return '';
+}
+
+function renderFeatureList(features = {}, cell) {
+  if (!cell) return;
+  const details = cell.querySelector('.row-accordion');
+  const summaryEl = details?.querySelector('summary');
+  const list = cell.querySelector('.feature-list');
+
+  if (summaryEl) {
+    const summaryText = formatFeatures(features) || 'Información pendiente';
+    summaryEl.textContent = truncate(summaryText, 120);
+  }
+
+  if (!list) return;
+  list.innerHTML = '';
+
+  const entries = featureLabels
+    .map(([key, label]) => [label, features[key]])
+    .filter(([, value]) => Boolean(value));
+
+  if (features.extra) {
+    entries.push(['Extra', features.extra]);
+  }
+
+  if (!entries.length) {
+    const empty = document.createElement('p');
+    empty.className = 'helper helper--inline';
+    empty.textContent = 'Sin datos cargados aún.';
+    list.appendChild(empty);
+    return;
+  }
+
+  entries.forEach(([label, value]) => {
+    const dt = document.createElement('dt');
+    dt.textContent = label;
+    const dd = document.createElement('dd');
+    dd.textContent = value;
+    list.appendChild(dt);
+    list.appendChild(dd);
+  });
 }
 
 function formatFromFields(fields) {
@@ -178,43 +261,55 @@ function parseVehicleData(text) {
     regexFind(/placa\s*[:\-]?\s*([A-Z0-9-]{5,8})/i) ||
     get(['Patente']);
 
+  const type = get(['Tipo', 'Tipo vehiculo', 'Tipo de vehiculo']);
   const marca = get(['Marca']);
   const modelo = get(['Modelo']);
-  const vehicle = [marca, modelo].filter(Boolean).join(' ');
 
   const year =
     regexFind(/Año\s*[:\-]?\s*(\d{4})/i) ||
     regexFind(/AÑO DE PAGO\s*[:\-]?\s*(\d{4})/i) ||
     get(['Año']);
 
+  const color = get(['Color']);
+  const engine =
+    get(['Nº Motor', 'N° Motor', 'Numero Motor', 'Motor']) || regexFind(/motor\s*[:\-]?\s*([A-Z0-9]+)/i);
+  const chassis =
+    get(['Nº Chasis', 'N° Chasis', 'N° de chasis', 'Chasis', 'N° de serie']) ||
+    regexFind(/chasis\s*[:\-]?\s*([A-Z0-9]+)/i);
+
   const origin =
-    get(['Procedencia', 'Comuna de revisión', 'Municipalidad']) ||
+    get(['Procedencia', 'Origen', 'Comuna de revisión', 'Municipalidad']) ||
     regexFind(/Procedencia\s*[:\-]?\s*([A-ZÁÉÍÓÚÜÑ\s]+)/i);
 
-  const permit =
-    get(['Permiso de circulación', 'Permiso de circulacion']) ||
-    get(['Año de pago']) ||
-    regexFind(/Permiso.*?(\d{4}[^\n]*)/i);
+  const maker = get(['Fabricante', 'Empresa fabricante', 'Armador']);
+  const seal = get(['Tipo de sello', 'Sello']);
+  const fuel = get(['Combustible', 'Tipo combustible']);
 
-  const inspection =
-    get(['Fecha de vencimiento', 'Fecha de vencimiento RT', 'Último control']) ||
-    regexFind(/Último control\s*[:\-]?\s*([0-9\-\/]+)/i);
-
-  const kms =
-    get(['Kilometraje']) ||
-    regexFind(/Kilometraje\s*[:\-]?\s*([0-9\.\s]+km[^\n]*)/i);
-
-  const price = get(['Precio', 'Valor']);
+  const extra = buildLegacyExtra({
+    permit:
+      get(['Permiso de circulación', 'Permiso de circulacion', 'Permiso']) ||
+      get(['Año de pago']) ||
+      regexFind(/Permiso.*?(\d{4}[^\n]*)/i),
+    inspection:
+      get(['Fecha de vencimiento', 'Fecha de vencimiento RT', 'Último control', 'Revisión técnica']) ||
+      regexFind(/Último control\s*[:\-]?\s*([0-9\-\/]+)/i),
+    kms: get(['Kilometraje', 'Kilometros']) || regexFind(/Kilometraje\s*[:\-]?\s*([0-9\.\s]+km[^\n]*)/i),
+    price: get(['Precio', 'Valor']),
+  });
 
   const fields = {
     Patente: plate,
+    Tipo: type,
     Marca: marca,
     Modelo: modelo,
     Año: year,
+    Color: color,
+    'Nº Motor': engine,
+    'Nº Chasis': chassis,
     Procedencia: origin,
-    'Permiso de circulación': permit,
-    'Revisión técnica': inspection,
-    Kilometraje: kms,
+    Fabricante: maker,
+    'Tipo de sello': seal,
+    Combustible: fuel,
   };
 
   const summary = formatFromFields(
@@ -225,13 +320,18 @@ function parseVehicleData(text) {
     plate,
     summary,
     features: {
-      vehicle,
+      type,
+      brand: marca,
+      model: modelo,
       year,
+      color,
+      engine,
+      chassis,
       origin,
-      permit,
-      inspection,
-      kms,
-      price,
+      maker,
+      seal,
+      fuel,
+      extra,
     },
   };
 }
@@ -240,6 +340,12 @@ function setCaptureStatus(message, tone = 'muted') {
   if (!captureStatus) return;
   captureStatus.textContent = message;
   captureStatus.dataset.tone = tone;
+}
+
+function ensureOcrAvailable() {
+  if (!window.Tesseract) {
+    throw new Error('Tesseract no está disponible (la red o el host lo bloqueó). Refresca con Ctrl+Shift+R o usa la copia local.');
+  }
 }
 
 function setCapturePreview(content) {
@@ -334,10 +440,11 @@ function renderRecords() {
       const row = template.content.cloneNode(true).querySelector('tr');
       row.dataset.id = record.id;
 
+      record.features = normalizeFeatures(record.features);
+
       row.querySelector('.plate').textContent = record.plate;
       row.querySelector('.segment').textContent = record.segment;
-      const details = formatFeatures(record.features);
-      row.querySelector('.details').textContent = details ? truncate(details, 120) : '—';
+      renderFeatureList(record.features, row.querySelector('.details'));
       row.querySelector('.notes').textContent = truncate(record.notes);
 
       const tagsCell = row.querySelector('.tags');
@@ -410,7 +517,7 @@ function addRecord(event) {
   const segment = segmentSelect.value;
   const notes = notesInput.value.trim();
   const tags = parseTags(tagsInput.value);
-  const features = collectFeatures();
+  const features = normalizeFeatures(collectFeatures());
 
   if (!plate) {
     plateInput.focus();
@@ -526,13 +633,18 @@ function applyParsedData(parsed, originLabel = 'OCR') {
 
   const { features } = parsed;
   if (features) {
-    featureVehicle.value = features.vehicle || featureVehicle.value;
-    featureYear.value = features.year || featureYear.value;
-    featureOrigin.value = features.origin || featureOrigin.value;
-    featurePermit.value = features.permit || featurePermit.value;
-    featureInspection.value = features.inspection || featureInspection.value;
-    featureKms.value = features.kms || featureKms.value;
-    featurePrice.value = features.price || featurePrice.value;
+    const normalized = normalizeFeatures(features);
+    featureType.value = normalized.type || featureType.value;
+    featureBrand.value = normalized.brand || featureBrand.value;
+    featureModel.value = normalized.model || featureModel.value;
+    featureYear.value = normalized.year || featureYear.value;
+    featureColor.value = normalized.color || featureColor.value;
+    featureEngine.value = normalized.engine || featureEngine.value;
+    featureChassis.value = normalized.chassis || featureChassis.value;
+    featureOrigin.value = normalized.origin || featureOrigin.value;
+    featureMaker.value = normalized.maker || featureMaker.value;
+    featureSeal.value = normalized.seal || featureSeal.value;
+    featureFuel.value = normalized.fuel || featureFuel.value;
   }
 
   openManualPanel();
@@ -541,6 +653,7 @@ function applyParsedData(parsed, originLabel = 'OCR') {
 
 async function handleImageFile(file) {
   setCaptureStatus(`Leyendo ${file.name}…`, 'info');
+  ensureOcrAvailable();
   const dataUrl = await readFileAsDataURL(file);
 
   const img = document.createElement('img');
@@ -555,6 +668,7 @@ async function handleImageFile(file) {
 
 async function handlePdfFile(file) {
   setCaptureStatus(`Procesando PDF ${file.name}…`, 'info');
+  ensureOcrAvailable();
   const { images, pages } = await renderPdfToImages(file);
 
   const preview = document.createElement('div');
@@ -697,8 +811,8 @@ async function lookupPlate() {
   for (const fetcher of attempts) {
     try {
       const { summary, source } = await fetcher(plate);
-      notesInput.value = summary;
-      openManualPanel();
+      const parsed = parseVehicleData(summary);
+      applyParsedData({ ...parsed, summary }, source);
       setLookupStatus(`Datos obtenidos vía ${source}. Revisa y guarda en el CRM.`, 'success');
       lookupBtn.disabled = false;
       return;
@@ -769,7 +883,7 @@ function init() {
     });
   }
 
-  setCaptureStatus('Esperando archivo…', 'muted');
+  setCaptureStatus('Esperando archivo… (si ves error de OCR, recarga con Ctrl+Shift+R)', 'muted');
 }
 
 document.addEventListener('DOMContentLoaded', init);

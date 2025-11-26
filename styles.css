@@ -163,6 +163,10 @@ main {
   align-items: center;
 }
 
+.grid--tight {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -331,6 +335,61 @@ tr.empty td {
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.accordion,
+.row-accordion {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: #0b1220;
+}
+
+.accordion__summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.accordion__title {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.accordion__hint {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.row-accordion summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.feature-list {
+  margin: 10px 0 0;
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 2fr;
+  gap: 6px 12px;
+}
+
+.feature-list dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.feature-list dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.helper--inline {
+  margin: 0;
 }
 
 .field--stacked {

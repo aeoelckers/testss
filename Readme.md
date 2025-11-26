@@ -42,7 +42,7 @@ La interfaz es 100% estática, por lo que puedes servirla en GitHub Pages para c
 3. El flujo de trabajo `.github/workflows/deploy.yml` subirá el contenido de la raíz al sitio de Pages cada vez que hagas push a `main` o `work`, o ejecutes el workflow manualmente desde la pestaña *Actions*.
 4. Accede a la URL de Pages publicada para usar el CRM en modo manual (buscar en patentechile.com, copiar los datos y guardarlos aquí).
 
-Si no ves los últimos cambios en Pages (por ejemplo, sigues viendo el fondo claro), fuerza un *hard refresh* (Ctrl+Shift+R) o edita las query strings de los assets en `index.html` (por ejemplo `styles.css?v=2024-06-22` y `script.js?v=2024-06-22`) para obligar al navegador a descargar la versión nueva. Cada vez que subas cambios, aumenta el número de versión para evitar que el navegador siga usando archivos antiguos.
+Si no ves los últimos cambios en Pages (por ejemplo, sigues viendo el fondo claro), fuerza un *hard refresh* (Ctrl+Shift+R) o edita las query strings de los assets en `index.html` (por ejemplo `styles.css?v=2024-06-25` y `script.js?v=2024-06-25`) para obligar al navegador a descargar la versión nueva. Cada vez que subas cambios, aumenta el número de versión para evitar que el navegador siga usando archivos antiguos.
 
 Recuerda también que el botón "Buscar en patentechile.com" usa varias rutas: si corres `python server.py` responderá el proxy local; si estás en GitHub Pages probará con dos proxies públicos. Si ninguno responde, el aviso te pedirá abrir la web oficial y pegar los datos manualmente.
 
@@ -59,7 +59,7 @@ python example.py
 1. **Confirma el branch**: asegúrate de haber hecho push a `main` o `work` (son los que disparan el deploy).
 2. **Revisa el workflow**: en la pestaña *Actions* verifica que el job "Deploy static content to Pages" esté en verde y corra sobre tu último commit.
 3. **Origen de Pages**: en Settings → Pages confirma que el origen es **GitHub Actions** (no "branch").
-4. **Versión de assets**: en `index.html` actualiza las query strings de CSS/JS y la constante `APP_VERSION` en `script.js` al mismo valor (ej. `2024-06-23`) antes de hacer push.
+4. **Versión de assets**: en `index.html` actualiza las query strings de CSS/JS y la constante `APP_VERSION` en `script.js` al mismo valor (ej. `2024-06-25`) antes de hacer push.
 5. **Espera la propagación**: GitHub suele tardar 1-2 minutos después del workflow en reflejar el build.
 6. **Forza la recarga**: abre la URL pública (usa el path completo, por ejemplo `https://usuario.github.io/repositorio/`). Luego pulsa Ctrl+Shift+R o prueba en una ventana de incógnito.
 7. **Verifica la etiqueta**: en la esquina superior derecha de la página deberías ver la pill con el texto `v<tu versión> · modo…`. Si no coincide, sigues viendo la copia vieja.

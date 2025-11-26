@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles.css?v=2024-06-23" />
+  <link rel="stylesheet" href="styles.css?v=2024-06-25" />
 </head>
   <body>
     <header class="header">
@@ -56,44 +56,66 @@
           <div class="manual__header">
             <div>
               <p class="eyebrow">Ficha rápida</p>
-              <h3>Características del vehículo</h3>
+              <h3>Información vehicular</h3>
               <p class="helper">
-                Usa este bloque para copiar las características clave tal como salen en la tabla de patentechile.com.
+                Copia la tabla tal cual aparece en patentechile.com o rellénala con los datos del remate.
               </p>
             </div>
             <span class="pill pill--muted">Se abre al tocar “Completar manualmente”.</span>
           </div>
 
-          <div class="grid">
-            <label class="field">
-              <span>Vehículo / Modelo</span>
-              <input id="feature-vehicle" autocomplete="off" placeholder="Ej: Volkswagen Amarok 4x4" />
-            </label>
-            <label class="field">
-              <span>Año</span>
-              <input id="feature-year" autocomplete="off" placeholder="2018" />
-            </label>
-            <label class="field">
-              <span>Origen</span>
-              <input id="feature-origin" autocomplete="off" placeholder="Quilicura, Valparaíso…" />
-            </label>
-            <label class="field">
-              <span>Permiso de circulación</span>
-              <input id="feature-permit" autocomplete="off" placeholder="2023 pagado total / Vence 2024" />
-            </label>
-            <label class="field">
-              <span>Fecha última R.T.</span>
-              <input id="feature-inspection" autocomplete="off" placeholder="Vencida 2019" />
-            </label>
-            <label class="field">
-              <span>Kilometraje</span>
-              <input id="feature-kms" autocomplete="off" placeholder="519.856 kms" />
-            </label>
-            <label class="field">
-              <span>Precio / Valor referencia</span>
-              <input id="feature-price" autocomplete="off" placeholder="$9.300.000" />
-            </label>
-          </div>
+          <details class="accordion" open>
+            <summary class="accordion__summary">
+              <span class="accordion__title">Información vehicular</span>
+              <span class="accordion__hint">Patente, tipo, marca, modelo, año, color…</span>
+            </summary>
+            <div class="grid grid--tight">
+              <label class="field">
+                <span>Tipo</span>
+                <input id="feature-type" autocomplete="off" placeholder="Camioneta, sedán, SUV…" />
+              </label>
+              <label class="field">
+                <span>Marca</span>
+                <input id="feature-brand" autocomplete="off" placeholder="CHEVROLET, TOYOTA…" />
+              </label>
+              <label class="field">
+                <span>Modelo</span>
+                <input id="feature-model" autocomplete="off" placeholder="LUV DMAX, RAV4…" />
+              </label>
+              <label class="field">
+                <span>Año</span>
+                <input id="feature-year" autocomplete="off" placeholder="2009" />
+              </label>
+              <label class="field">
+                <span>Color</span>
+                <input id="feature-color" autocomplete="off" placeholder="Blanco, gris, rojo…" />
+              </label>
+              <label class="field">
+                <span>Nº Motor</span>
+                <input id="feature-engine" autocomplete="off" placeholder="G276019" />
+              </label>
+              <label class="field">
+                <span>Nº Chasis</span>
+                <input id="feature-chassis" autocomplete="off" placeholder="8GGTF3…" />
+              </label>
+              <label class="field">
+                <span>Procedencia</span>
+                <input id="feature-origin" autocomplete="off" placeholder="Chile, importado…" />
+              </label>
+              <label class="field">
+                <span>Fabricante</span>
+                <input id="feature-maker" autocomplete="off" placeholder="General Motors Chile Ltda." />
+              </label>
+              <label class="field">
+                <span>Tipo de sello</span>
+                <input id="feature-seal" autocomplete="off" placeholder="Sello verde, catalítico…" />
+              </label>
+              <label class="field">
+                <span>Combustible</span>
+                <input id="feature-fuel" autocomplete="off" placeholder="Gasolina, diésel…" />
+              </label>
+            </div>
+          </details>
 
           <div class="grid">
             <label class="field">
@@ -112,11 +134,12 @@
                 id="notes-input"
                 name="notes"
                 rows="4"
-                placeholder="Pega aquí el resumen de la consulta: marca, modelo, año, dueño, observaciones..."
+                placeholder="Resumen del resultado: propietarios, permisos, deudas, kilometraje…"
               ></textarea>
             </label>
             <label class="field">
-              <span>Etiquetas (separadas por coma)</span>
+              <span>Etiquetas (separadas por coma)
+              </span>
               <input id="tags-input" name="tags" autocomplete="off" placeholder="ej: revisión técnica, transferencia, deuda" />
             </label>
             <div class="field field--stacked">
@@ -172,7 +195,7 @@
             <tr>
               <th>Patente</th>
               <th>Segmento</th>
-              <th>Características</th>
+              <th>Información vehicular</th>
               <th>Notas</th>
               <th>Etiquetas</th>
               <th>Guardado</th>
@@ -193,7 +216,12 @@
     <tr>
       <td class="plate"></td>
       <td class="segment"></td>
-      <td class="details"></td>
+      <td class="details">
+        <details class="row-accordion">
+          <summary>Información vehicular</summary>
+          <dl class="feature-list"></dl>
+        </details>
+      </td>
       <td class="notes"></td>
       <td class="tags"></td>
       <td class="timestamp"></td>
@@ -204,8 +232,8 @@
     </tr>
   </template>
 
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.3.136/build/pdf.min.js" integrity="sha256-F3xquF+j7iepl3bJ5J5V8zY0kfEUvG7nqNsmQlDb4Pw=" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js" integrity="sha256-+5lBjXoeiKcDG4zB2M4Jo0hzBhrn9oBjBMZnC1o7Tic=" crossorigin="anonymous"></script>
-  <script src="script.js?v=2024-06-23"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.3.136/build/pdf.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js" crossorigin="anonymous"></script>
+  <script src="script.js?v=2024-06-25"></script>
 </body>
 </html>
