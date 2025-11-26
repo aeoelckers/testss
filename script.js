@@ -1,4 +1,4 @@
-const APP_VERSION = '2024-06-21';
+const APP_VERSION = '2024-06-22';
 const storageKey = 'plate-records';
 const defaultSegments = [
   'Autos para comprar',
@@ -119,6 +119,29 @@ function formatFromFields(fields) {
     .join('\n');
 }
 
+function extractFromHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const rows = Array.from(doc.querySelectorAll('tr'));
+  const fields = {};
+  const orderedPairs = [];
+
+  rows.forEach((row) => {
+    const cells = Array.from(row.querySelectorAll('th,td'));
+    if (cells.length < 2) return;
+
+    const key = cells[0].textContent.trim();
+    const value = cells[1].textContent.trim();
+    if (!key || !value) return;
+    if (key.toLowerCase().includes('información vehicular')) return;
+
+    fields[key] = value;
+    orderedPairs.push([key, value]);
+  });
+
+  const summary = orderedPairs.map(([k, v]) => `${k}: ${v}`).join('\n');
+  return { fields, summary };
+}
+
 function buildSummary(payload) {
   if (!payload) return '';
 
@@ -131,6 +154,9 @@ function buildSummary(payload) {
   }
 
   if (payload.html) {
+    const { summary } = extractFromHtml(payload.html);
+    if (summary) return summary;
+
     const doc = new DOMParser().parseFromString(payload.html, 'text/html');
     const text = doc.body?.innerText?.trim();
     if (text) {
@@ -288,7 +314,7 @@ function setLookupStatus(message, tone = 'muted') {
 function setDefaultLookupMessage() {
   if (isLikelyStaticHost) {
     setLookupStatus(
-      'En GitHub Pages u otro hosting estático, el autollenado requiere que corras server.py en tu computador.',
+      'El sitio intentará consultar patentechile.com usando proxies públicos; si falla, puedes abrir la página oficial y pegar los datos.',
       'warning',
     );
     return;
@@ -313,14 +339,73 @@ function renderModeBanner() {
     modeBanner.dataset.tone = 'warning';
     modeBannerTitle.textContent = `Modo estático · v${APP_VERSION}`;
     modeBannerBody.textContent =
-      'Esta copia es solo para uso manual (ej. GitHub Pages). El botón "Buscar en patentechile.com" no funcionará sin ejecutar server.py en local. Si sigues viendo el fondo claro, fuerza Ctrl+Shift+R hasta que aparezca esta versión.';
+      'Esta copia es estática (ej. GitHub Pages). El botón de búsqueda intentará usar proxies públicos; si fallan, abre la web oficial y pega los datos. Si sigues viendo otro diseño, fuerza Ctrl+Shift+R hasta que aparezca esta versión.';
     return;
   }
 
   modeBanner.dataset.tone = 'info';
   modeBannerTitle.textContent = `Modo local/proxy · v${APP_VERSION}`;
   modeBannerBody.textContent =
-    'Aquí el botón de búsqueda intentará traer los datos directamente. Puede tardar unos segundos si patentechile.com muestra anuncios; revisa la consola si falla.';
+    'Aquí el botón de búsqueda usará el proxy local para leer patentechile.com. Puede tardar unos segundos si el sitio muestra anuncios; revisa la consola si falla.';
+}
+
+async function fetchFromLocalProxy(plate) {
+  const res = await fetch(`/api/proxy?plate=${encodeURIComponent(plate)}`);
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error('El proxy local no está disponible en esta copia.');
+    }
+    throw new Error(`No se pudo obtener datos (HTTP ${res.status}).`);
+  }
+
+  const payload = await res.json();
+  if (payload?.error) {
+    throw new Error(payload.error);
+  }
+
+  const summary = buildSummary(payload);
+  if (!summary) {
+    throw new Error('No se encontraron datos legibles en la respuesta del proxy.');
+  }
+
+  return { summary, source: 'proxy local' };
+}
+
+async function fetchFromAllOrigins(plate) {
+  const target = `https://www.patentechile.com/?patente=${encodeURIComponent(plate)}`;
+  const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`;
+
+  const res = await fetch(url, { headers: { Accept: 'text/html' } });
+  if (!res.ok) {
+    throw new Error(`AllOrigins devolvió HTTP ${res.status}`);
+  }
+
+  const html = await res.text();
+  const { summary } = extractFromHtml(html);
+  if (!summary) {
+    throw new Error('La página respondió sin datos reconocibles.');
+  }
+
+  return { summary, source: 'proxy público AllOrigins' };
+}
+
+async function fetchFromJina(plate) {
+  const target = `https://www.patentechile.com/?patente=${encodeURIComponent(plate)}`;
+  const url = `https://r.jina.ai/${target}`;
+  const res = await fetch(url, { headers: { Accept: 'text/html' } });
+  if (!res.ok) {
+    throw new Error(`Jina AI devolvió HTTP ${res.status}`);
+  }
+
+  const text = await res.text();
+  const startIndex = text.indexOf('<html');
+  const html = startIndex >= 0 ? text.slice(startIndex) : text;
+  const { summary } = extractFromHtml(html);
+  if (!summary) {
+    throw new Error('Jina AI respondió sin datos reconocibles.');
+  }
+
+  return { summary, source: 'proxy público Jina AI' };
 }
 
 async function lookupPlate() {
@@ -334,45 +419,30 @@ async function lookupPlate() {
   setLookupStatus('Buscando en patentechile.com…', 'info');
   lookupBtn.disabled = true;
 
-  try {
-    const res = await fetch(`/api/proxy?plate=${encodeURIComponent(plate)}`);
-    if (!res.ok) {
-      if (res.status === 404) {
-        throw new Error('El proxy no está disponible en esta copia estática. Corre python server.py en local.');
-      }
-      throw new Error(`No se pudo obtener datos (HTTP ${res.status}).`);
-    }
-
-    const payload = await res.json();
-    if (payload?.error) {
-      throw new Error(payload.error);
-    }
-
-    if (!payload?.html) {
-      throw new Error('Respuesta vacía');
-    }
-
-    const summary = buildSummary(payload);
-    if (!summary) {
-      throw new Error('No se encontraron datos legibles.');
-    }
-
-    notesInput.value = summary;
-    openManualPanel();
-    setLookupStatus('Datos obtenidos. Revisa y guarda en el CRM.', 'success');
-  } catch (err) {
-    console.error(err);
-    const manualHint = isLikelyStaticHost
-      ? 'En GitHub Pages el botón de autollenado no funciona; abre la web oficial y pega los datos aquí.'
-      : 'Abre la pestaña de patentechile.com y copia la info en la ficha manual.';
-
-    setLookupStatus(
-      `No pudimos leer los datos automáticamente (${err.message}). ${manualHint}`,
-      'error',
-    );
-  } finally {
-    lookupBtn.disabled = false;
+  const attempts = [];
+  if (!isLikelyStaticHost) {
+    attempts.push(fetchFromLocalProxy);
   }
+  attempts.push(fetchFromAllOrigins, fetchFromJina);
+
+  for (const fetcher of attempts) {
+    try {
+      const { summary, source } = await fetcher(plate);
+      notesInput.value = summary;
+      openManualPanel();
+      setLookupStatus(`Datos obtenidos vía ${source}. Revisa y guarda en el CRM.`, 'success');
+      lookupBtn.disabled = false;
+      return;
+    } catch (err) {
+      console.warn('Intento fallido:', err.message);
+    }
+  }
+
+  setLookupStatus(
+    'No pudimos leer los datos automáticamente. Abre patentechile.com en otra pestaña, copia la tabla y pégala aquí.',
+    'error',
+  );
+  lookupBtn.disabled = false;
 }
 
 function init() {

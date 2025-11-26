@@ -1,17 +1,17 @@
 :root {
   color-scheme: dark;
-  --bg: #0b1220;
-  --card: #111827;
-  --border: #1f2937;
-  --text: #e5e7eb;
+  --bg: #030712;
+  --card: #0a0f1a;
+  --border: #151c2b;
+  --text: #e2e8f0;
   --muted: #94a3b8;
   --primary: #38bdf8;
   --primary-strong: #0ea5e9;
-  --ghost: #111827;
+  --ghost: #0a0f1a;
   --ghost-border: #1f2937;
-  --pill: #0ea5e91a;
+  --pill: #0ea5e933;
   --pill-text: #7dd3fc;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
