@@ -1,4 +1,4 @@
-const APP_VERSION = '2024-06-22';
+const APP_VERSION = '2024-06-23';
 const storageKey = 'plate-records';
 const defaultSegments = [
   'Autos para comprar',
@@ -31,6 +31,11 @@ const manualToggle = document.getElementById('manual-toggle');
 const modeBanner = document.getElementById('mode-banner');
 const modeBannerTitle = modeBanner?.querySelector('.banner__title');
 const modeBannerBody = modeBanner?.querySelector('.banner__body');
+
+const captureInput = document.getElementById('capture-input');
+const captureStatus = document.getElementById('capture-status');
+const capturePreview = document.getElementById('capture-preview');
+const captureUploader = document.getElementById('capture-uploader');
 
 const featureVehicle = document.getElementById('feature-vehicle');
 const featureYear = document.getElementById('feature-year');
@@ -117,6 +122,131 @@ function formatFromFields(fields) {
   return Object.entries(fields)
     .map(([label, value]) => `${label}: ${value}`)
     .join('\n');
+}
+
+function buildFieldMap(text) {
+  const lines = text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  const map = {};
+  lines.forEach((line) => {
+    const colonIndex = line.indexOf(':');
+    if (colonIndex > 0) {
+      const key = line.slice(0, colonIndex).trim();
+      const value = line.slice(colonIndex + 1).trim();
+      if (key && value) {
+        map[key] = value;
+      }
+      return;
+    }
+
+    const tokens = line.split(/\s{2,}/);
+    if (tokens.length === 2) {
+      const [key, value] = tokens;
+      if (key && value) {
+        map[key.trim()] = value.trim();
+      }
+    }
+  });
+
+  return { map, lines };
+}
+
+function parseVehicleData(text) {
+  const { map, lines } = buildFieldMap(text);
+
+  const get = (keys) => {
+    for (const key of keys) {
+      if (map[key]) return map[key];
+      const line = lines.find((l) => l.toLowerCase().startsWith(`${key.toLowerCase()} `));
+      if (line) {
+        return line.replace(new RegExp(`^${key}`, 'i'), '').trim();
+      }
+    }
+    return '';
+  };
+
+  const regexFind = (pattern) => {
+    const match = text.match(pattern);
+    return match ? match[1].trim() : '';
+  };
+
+  const plate =
+    regexFind(/patente\s*[:\-]?\s*([A-Z0-9-]{5,8})/i) ||
+    regexFind(/placa\s*[:\-]?\s*([A-Z0-9-]{5,8})/i) ||
+    get(['Patente']);
+
+  const marca = get(['Marca']);
+  const modelo = get(['Modelo']);
+  const vehicle = [marca, modelo].filter(Boolean).join(' ');
+
+  const year =
+    regexFind(/Año\s*[:\-]?\s*(\d{4})/i) ||
+    regexFind(/AÑO DE PAGO\s*[:\-]?\s*(\d{4})/i) ||
+    get(['Año']);
+
+  const origin =
+    get(['Procedencia', 'Comuna de revisión', 'Municipalidad']) ||
+    regexFind(/Procedencia\s*[:\-]?\s*([A-ZÁÉÍÓÚÜÑ\s]+)/i);
+
+  const permit =
+    get(['Permiso de circulación', 'Permiso de circulacion']) ||
+    get(['Año de pago']) ||
+    regexFind(/Permiso.*?(\d{4}[^\n]*)/i);
+
+  const inspection =
+    get(['Fecha de vencimiento', 'Fecha de vencimiento RT', 'Último control']) ||
+    regexFind(/Último control\s*[:\-]?\s*([0-9\-\/]+)/i);
+
+  const kms =
+    get(['Kilometraje']) ||
+    regexFind(/Kilometraje\s*[:\-]?\s*([0-9\.\s]+km[^\n]*)/i);
+
+  const price = get(['Precio', 'Valor']);
+
+  const fields = {
+    Patente: plate,
+    Marca: marca,
+    Modelo: modelo,
+    Año: year,
+    Procedencia: origin,
+    'Permiso de circulación': permit,
+    'Revisión técnica': inspection,
+    Kilometraje: kms,
+  };
+
+  const summary = formatFromFields(
+    Object.fromEntries(Object.entries(fields).filter(([, v]) => Boolean(v)))
+  );
+
+  return {
+    plate,
+    summary,
+    features: {
+      vehicle,
+      year,
+      origin,
+      permit,
+      inspection,
+      kms,
+      price,
+    },
+  };
+}
+
+function setCaptureStatus(message, tone = 'muted') {
+  if (!captureStatus) return;
+  captureStatus.textContent = message;
+  captureStatus.dataset.tone = tone;
+}
+
+function setCapturePreview(content) {
+  if (!capturePreview) return;
+  capturePreview.innerHTML = '';
+  if (!content) return;
+  capturePreview.appendChild(content);
 }
 
 function extractFromHtml(html) {
@@ -323,6 +453,145 @@ function setDefaultLookupMessage() {
   setLookupStatus('Usa el botón para intentar leer los datos automáticamente desde patentechile.com.', 'muted');
 }
 
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function readFileAsArrayBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function ensurePdfWorker() {
+  if (!window.pdfjsLib) {
+    throw new Error('pdf.js no está disponible en esta copia.');
+  }
+  if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.3.136/build/pdf.worker.min.js';
+  }
+}
+
+async function renderPdfToImages(file) {
+  ensurePdfWorker();
+  const data = await readFileAsArrayBuffer(file);
+  const pdf = await window.pdfjsLib.getDocument({ data }).promise;
+  const images = [];
+
+  const pageCount = Math.min(pdf.numPages, 3);
+  for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber);
+    const viewport = page.getViewport({ scale: 2 });
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({ canvasContext: context, viewport }).promise;
+    images.push(canvas.toDataURL('image/png'));
+  }
+
+  return { images, pages: pdf.numPages };
+}
+
+async function ocrImage(dataUrl) {
+  if (!window.Tesseract) {
+    throw new Error('Tesseract no está disponible en esta copia.');
+  }
+  const { data } = await window.Tesseract.recognize(dataUrl, 'spa', {
+    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-abcdefghijklmnopqrstuvwxyzÁÉÍÓÚÜÑáéíóúüñ./() ',
+  });
+  return data.text || '';
+}
+
+function applyParsedData(parsed, originLabel = 'OCR') {
+  if (!parsed) return;
+
+  if (parsed.plate) {
+    plateInput.value = normalizePlate(parsed.plate);
+  }
+
+  if (parsed.summary) {
+    notesInput.value = parsed.summary;
+  }
+
+  const { features } = parsed;
+  if (features) {
+    featureVehicle.value = features.vehicle || featureVehicle.value;
+    featureYear.value = features.year || featureYear.value;
+    featureOrigin.value = features.origin || featureOrigin.value;
+    featurePermit.value = features.permit || featurePermit.value;
+    featureInspection.value = features.inspection || featureInspection.value;
+    featureKms.value = features.kms || featureKms.value;
+    featurePrice.value = features.price || featurePrice.value;
+  }
+
+  openManualPanel();
+  setCaptureStatus(`Datos extraídos de ${originLabel}. Revisa y completa si falta algo.`, 'success');
+}
+
+async function handleImageFile(file) {
+  setCaptureStatus(`Leyendo ${file.name}…`, 'info');
+  const dataUrl = await readFileAsDataURL(file);
+
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  img.alt = `Vista previa de ${file.name}`;
+  setCapturePreview(img);
+
+  const text = await ocrImage(dataUrl);
+  const parsed = parseVehicleData(text);
+  applyParsedData(parsed, file.name);
+}
+
+async function handlePdfFile(file) {
+  setCaptureStatus(`Procesando PDF ${file.name}…`, 'info');
+  const { images, pages } = await renderPdfToImages(file);
+
+  const preview = document.createElement('div');
+  preview.className = 'uploader__preview-pages';
+  preview.textContent = `PDF con ${pages} página(s). Analizando primeras ${images.length}.`;
+  setCapturePreview(preview);
+
+  const chunks = [];
+  for (const [index, image] of images.entries()) {
+    setCaptureStatus(`Reconociendo página ${index + 1}…`, 'info');
+    const text = await ocrImage(image);
+    chunks.push(text);
+  }
+
+  const parsed = parseVehicleData(chunks.join('\n'));
+  applyParsedData(parsed, file.name);
+}
+
+async function handleCapture(file) {
+  if (!file) return;
+  setCapturePreview(null);
+  try {
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (isPdf) {
+      await handlePdfFile(file);
+    } else {
+      await handleImageFile(file);
+    }
+  } catch (err) {
+    console.error('Error al procesar archivo', err);
+    setCaptureStatus(
+      `No se pudo leer el archivo. Intenta nuevamente o pega los datos manualmente. (${err.message})`,
+      'error',
+    );
+  }
+}
+
 function setVersionBadge() {
   if (!versionBadge) return;
 
@@ -471,6 +740,36 @@ function init() {
   manualToggle.addEventListener('click', toggleManualPanel);
   closeManualPanel();
   setDefaultLookupMessage();
+
+  if (captureInput) {
+    captureInput.addEventListener('change', (event) => {
+      const [file] = event.target.files || [];
+      handleCapture(file);
+    });
+  }
+
+  if (captureUploader) {
+    ['dragenter', 'dragover'].forEach((evt) => {
+      captureUploader.addEventListener(evt, (event) => {
+        event.preventDefault();
+        captureUploader.classList.add('uploader--active');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach((evt) => {
+      captureUploader.addEventListener(evt, () => {
+        captureUploader.classList.remove('uploader--active');
+      });
+    });
+
+    captureUploader.addEventListener('drop', (event) => {
+      event.preventDefault();
+      const [file] = event.dataTransfer?.files || [];
+      handleCapture(file);
+    });
+  }
+
+  setCaptureStatus('Esperando archivo…', 'muted');
 }
 
 document.addEventListener('DOMContentLoaded', init);

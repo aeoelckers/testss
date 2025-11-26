@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles.css?v=2024-06-22" />
+  <link rel="stylesheet" href="styles.css?v=2024-06-23" />
 </head>
   <body>
     <header class="header">
@@ -119,6 +119,25 @@
               <span>Etiquetas (separadas por coma)</span>
               <input id="tags-input" name="tags" autocomplete="off" placeholder="ej: revisión técnica, transferencia, deuda" />
             </label>
+            <div class="field field--stacked">
+              <div class="field__header">
+                <span>Cargar captura o PDF</span>
+                <span class="pill pill--muted">Opcional</span>
+              </div>
+              <p class="helper">
+                Sube una captura o un PDF de patentechile.com. Usaremos OCR para leer la tabla y rellenar la ficha.
+              </p>
+              <div class="uploader" id="capture-uploader">
+                <label class="uploader__drop" for="capture-input">
+                  <span class="uploader__title">Arrastra aquí tu imagen o PDF</span>
+                  <span class="uploader__subtitle">o haz clic para elegir un archivo</span>
+                  <span class="uploader__hint">Formatos: JPG, PNG, PDF</span>
+                </label>
+                <input id="capture-input" class="uploader__input" type="file" accept="image/*,application/pdf" />
+                <div class="uploader__status" id="capture-status">Esperando archivo…</div>
+                <div class="uploader__preview" id="capture-preview" aria-live="polite"></div>
+              </div>
+            </div>
             <div class="actions">
               <button type="submit" class="primary">Guardar en CRM</button>
               <button type="reset" class="ghost" id="reset-btn">Limpiar</button>
@@ -185,6 +204,8 @@
     </tr>
   </template>
 
-  <script src="script.js?v=2024-06-22"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.3.136/build/pdf.min.js" integrity="sha256-F3xquF+j7iepl3bJ5J5V8zY0kfEUvG7nqNsmQlDb4Pw=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js" integrity="sha256-+5lBjXoeiKcDG4zB2M4Jo0hzBhrn9oBjBMZnC1o7Tic=" crossorigin="anonymous"></script>
+  <script src="script.js?v=2024-06-23"></script>
 </body>
 </html>

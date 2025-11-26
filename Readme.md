@@ -22,6 +22,8 @@ Luego abre http://localhost:8000/index.html en tu navegador y usa `index.html` p
 - Ingresar una patente, segmento y notas copiadas desde patentechile.com.
 - Desplegar la ficha manual solo cuando la necesitas para copiar características clave (modelo, año, origen, permiso de
   circulación, fecha de la última R.T., kilometraje y precio de referencia) y elegir el segmento antes de guardar.
+- Subir una captura o PDF de la consulta (por ejemplo un print de patentechile.com) para que el sitio intente extraer los
+  valores automáticamente con OCR (Tesseract.js + pdf.js). También admite el flujo manual si prefieres completar a mano.
 - Guardar el registro en `localStorage` para que quede tu historial local.
 - Filtrar por patente o segmento, copiar patentes al portapapeles y eliminar entradas.
 
@@ -57,7 +59,7 @@ python example.py
 1. **Confirma el branch**: asegúrate de haber hecho push a `main` o `work` (son los que disparan el deploy).
 2. **Revisa el workflow**: en la pestaña *Actions* verifica que el job "Deploy static content to Pages" esté en verde y corra sobre tu último commit.
 3. **Origen de Pages**: en Settings → Pages confirma que el origen es **GitHub Actions** (no "branch").
-4. **Versión de assets**: en `index.html` actualiza las query strings de CSS/JS y la constante `APP_VERSION` en `script.js` al mismo valor (ej. `2024-06-22`) antes de hacer push.
+4. **Versión de assets**: en `index.html` actualiza las query strings de CSS/JS y la constante `APP_VERSION` en `script.js` al mismo valor (ej. `2024-06-23`) antes de hacer push.
 5. **Espera la propagación**: GitHub suele tardar 1-2 minutos después del workflow en reflejar el build.
 6. **Forza la recarga**: abre la URL pública (usa el path completo, por ejemplo `https://usuario.github.io/repositorio/`). Luego pulsa Ctrl+Shift+R o prueba en una ventana de incógnito.
 7. **Verifica la etiqueta**: en la esquina superior derecha de la página deberías ver la pill con el texto `v<tu versión> · modo…`. Si no coincide, sigues viendo la copia vieja.
