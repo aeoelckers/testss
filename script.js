@@ -1,4 +1,4 @@
-const APP_VERSION = '2024-06-25';
+const APP_VERSION = '2024-06-26';
 const storageKey = 'plate-records';
 const defaultSegments = [
   'Autos para comprar',
@@ -207,6 +207,13 @@ function formatFromFields(fields) {
     .join('\n');
 }
 
+function normalizeLabelKey(label = '') {
+  return label
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[^a-z0-9]/g, '');
+}
+
 function buildFieldMap(text) {
   const lines = text
     .split(/\r?\n/)
@@ -214,7 +221,31 @@ function buildFieldMap(text) {
     .filter(Boolean);
 
   const map = {};
-  lines.forEach((line) => {
+  const knownKeys = [
+    'Patente',
+    'Tipo',
+    'Marca',
+    'Modelo',
+    'Año',
+    'Color',
+    'Nº Motor',
+    'N° Motor',
+    'Numero Motor',
+    'Motor',
+    'Nº Chasis',
+    'N° Chasis',
+    'Chasis',
+    'N° de serie',
+    'Procedencia',
+    'Origen',
+    'Fabricante',
+    'Tipo de sello',
+    'Sello',
+    'Combustible',
+  ];
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
     const colonIndex = line.indexOf(':');
     if (colonIndex > 0) {
       const key = line.slice(0, colonIndex).trim();
@@ -222,7 +253,7 @@ function buildFieldMap(text) {
       if (key && value) {
         map[key] = value;
       }
-      return;
+      continue;
     }
 
     const tokens = line.split(/\s{2,}/);
@@ -231,8 +262,17 @@ function buildFieldMap(text) {
       if (key && value) {
         map[key.trim()] = value.trim();
       }
+      continue;
     }
-  });
+
+    const normalized = normalizeLabelKey(line);
+    const inlineKey = knownKeys.find((key) => normalizeLabelKey(key) === normalized);
+    const nextLine = lines[i + 1];
+    if (inlineKey && nextLine && !map[inlineKey]) {
+      map[inlineKey] = nextLine.trim();
+      i += 1;
+    }
+  }
 
   return { map, lines };
 }
